@@ -3,8 +3,13 @@ import requests
 import pandas as pd
 
 def get_results(url, gender = 'women', drop_dnf=True, drop_dns=True):
-    
-    desired_columns = ['PL', 'NAME', 'YEAR', 'TEAM', 'Avg. Mile', 'TIME', 'SCORE', 'COURSE', 'DATE']
+    '''
+    A function that takes a race URL from TFRRS and returns scraped results
+    from that race. By default it returns women's results. Pass 'men' to 
+    the gender argument to get men's results. Runners who did not finish
+    (DNF) or did not start (DNS) are removed from scraped results. To     
+    keep them in the results, change drop_dnf and drop_dns to False.
+    '''
     
     #get course name from url:
     course_name_part = url.split('/')[-1] #getting the course name from after the slash (ie Panorama_Farms_Invitational)
@@ -52,6 +57,7 @@ def get_results(url, gender = 'women', drop_dnf=True, drop_dns=True):
             length = len(df)
             df.loc[length] = individual_row_data
         
+    desired_columns = ['PL', 'NAME', 'YEAR', 'TEAM', 'Avg. Mile', 'TIME', 'SCORE', 'COURSE', 'DATE']
     extra_columns = [col for col in df.columns if col not in desired_columns]
     if extra_columns:
         df = df.drop(columns=extra_columns)
