@@ -355,3 +355,22 @@ class CoursesDB:
         ;'''
         results = self.run_query(sql, {'partial_name': partial_race_name})
         return results
+        
+    def find_races_in_common(self, runner_id_1, runner_id_2):
+        '''
+        Find all races that two runners have in common
+        '''
+        sql = '''
+        SELECT * FROM tRace
+        WHERE race_id IN (
+            SELECT race_id
+            FROM tRaceResult
+            WHERE runner_id = :runner_id_1
+            INTERSECT
+            SELECT race_id
+            FROM tRaceResult
+            WHERE runner_id = :runner_id_2
+            )
+            ;'''
+        results = self.run_query(sql, {'runner_id_1': runner_id_1, 'runner_id_2': runner_id_2})
+        return results
