@@ -333,4 +333,14 @@ class CoursesDB:
         
         return results
 
-
+    def course_lookup(self, partial_race_name):
+        '''
+        Find courses with partial_race_name as a keyword and return all results from that race
+        '''
+        sql = '''
+        SELECT * FROM tRace
+        JOIN tRace USING (race_id)
+        WHERE race LIKE '%' || :partial_name || '%' 
+        ;'''
+        results = self.run_query(sql, {'partial_name': partial_race_name})
+        return results
