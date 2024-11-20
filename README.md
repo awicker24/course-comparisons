@@ -9,4 +9,6 @@ The `tffrsdatascraping.py` is the standalone web scraping function. It takes a U
 
 `CourseFunctions.ipynb` provides a sample use of the database in its full functionality. This file contains example outputs of all the functions being run on a database with loaded races. 
 
+## Using the Program
+
 
