@@ -15,5 +15,5 @@ Begin by downloading both the `courses.py` file and the `CourseFunctions.ipynb` 
 
 All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. Begin entering data into the database by running the `db.load_results` function with a race page URL for each race you would like to load into the database. You should only run the code once for each URL, otherwise an error will appear. Once all the data has been loaded, you can see the full database by running the next block of code.
 
-The following blocks of code showcase examples of the functions described in the section above. The inputs can be changed by the user to find specific pieces of information.
+The following blocks of code showcase examples of the functions described in the section above. The user can adjust the inputs to find specific information of interest.
 
