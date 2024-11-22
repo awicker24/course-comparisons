@@ -350,7 +350,7 @@ class CoursesDB:
         '''
         sql = '''
         SELECT * FROM tRace
-        JOIN tRace USING (race_id)
+        JOIN tRaceResult USING (race_id)
         WHERE race LIKE '%' || :partial_name || '%' 
         ;'''
         results = self.run_query(sql, {'partial_name': partial_race_name})
