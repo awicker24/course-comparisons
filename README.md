@@ -13,5 +13,5 @@ The `tffrsdatascraping.py` is the standalone web scraping function. It takes a U
 
 Begin by downloading both the `courses.py` file and the `CourseFunctions.ipynb` notebook in the same folder. The `courses.py` file contains the functions which allow the user to create and query the database, but all commands to access this code will be run from the `CourseFunctions.ipynb` notebook. After loading the necessary libraries, initialize the database by running the third block of code with the 'create' inut set to True. Then, run the next block to create the tables. You are now ready to begin loading data into the database.
 
-https://www.tfrrs.org/
+All data loaded into this database will come from individual race pages on the TFRRS website. Links to all of these pages can be found here: https://www.tfrrs.org/
 
