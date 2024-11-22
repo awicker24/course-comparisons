@@ -301,6 +301,7 @@ class CoursesDB:
             (
                     SELECT runner_id, race_id, COUNT(*) AS NumRaces
                     FROM tRaceResult
+                    WHERE race_id LIKE :RaceIDOne OR race_id LIKE :RaceIDTwo 
                     GROUP BY runner_id
                     HAVING NumRaces > 1 
             )
@@ -339,9 +340,10 @@ class CoursesDB:
 
 
     def see_loaded_races(self):
-
-        results = self.run_query('''SELECT * FROM tRace''')
-        
+        '''
+        See which races have been loaded into the database
+        '''
+        results = self.run_query('''SELECT * FROM tRace''')       
         return results
 
     def course_lookup(self, partial_race_name):
@@ -350,10 +352,20 @@ class CoursesDB:
         '''
         sql = '''
         SELECT * FROM tRace
-        JOIN tRaceResult USING (race_id)
         WHERE race LIKE '%' || :partial_name || '%' 
         ;'''
         results = self.run_query(sql, {'partial_name': partial_race_name})
+        return results
+
+    def runner_lookup(self, partial_runner_name):
+        '''
+        Find courses with partial_race_name as a keyword and return all results from that race
+        '''
+        sql = '''
+        SELECT * FROM tRunner
+        WHERE name LIKE '%' || :partial_name || '%' 
+        ;'''
+        results = self.run_query(sql, {'partial_name': partial_runner_name})
         return results
         
     def find_races_in_common(self, runner_id_1, runner_id_2):
@@ -374,3 +386,4 @@ class CoursesDB:
             ;'''
         results = self.run_query(sql, {'runner_id_1': runner_id_1, 'runner_id_2': runner_id_2})
         return results
+        
