@@ -11,7 +11,9 @@ app = Dash(__name__)
 
 app.title = 'Course Comparisons'
 
-db = courses.CoursesDB('courses.db', create = False) 
+db = courses.CoursesDB('courses.db', create = True) #change to false if not running for the first time
+db.drop_all_tables(are_you_sure = True)
+db.build_tables()
 
 #getting full table with all data: 
 query = '''
