@@ -18,5 +18,5 @@ All data loaded into this database will come from individual race pages on the T
 The following blocks of code showcase examples of the functions described in the section above. The user can adjust the inputs to find specific information of interest.
 
 ## For Arianna re dashboard
-So if you download the dash_testing.py file, then cd to whatever directory it's in via the command line (for me its `cd '/Users/anniewicker/Desktop/23-24/Fall_24/Automation'`, then type `python dash_testing.py` you should see a link like this http://127.0.0.1:8050/ somewhere in the output. If you paste that into your browser you should be able to see the dashboard.
+So if you download the dash_testing.py file, then cd to whatever directory it's in via the command line (for me its `cd '/Users/anniewicker/Desktop/23-24/Fall_24/Automation'`, then type `python dash_testing.py` you should see a link like this http://127.0.0.1:8050/ somewhere in the output. You should be able to paste that into your browser and see the dashboard. You have to have it running in your command line, though - just clicking that link from here won't work. 
 
