@@ -1,19 +1,51 @@
 import pandas as pd
 import sqlite3
 import courses
+from courses import CoursesDB
 from importlib import reload
 import dash
 from dash import Dash, dcc, html, Input, Output, State, callback, dash_table
+from urllib.parse import urlparse
 import plotly.express as px
 
 #initialize the app
 app = Dash(__name__)
-
+    
 app.title = 'Course Comparisons'
 
-db = courses.CoursesDB('courses.db', create = True) #change to false if not running for the first time
-db.drop_all_tables(are_you_sure = True)
-db.build_tables()
+db = courses.CoursesDB('courses.db', create = False) #change to false if not running for the first time
+#db.drop_all_tables(are_you_sure = True)
+#db.build_tables()
+
+def load_results(url, gender = 'women', drop_dnf=True, drop_dns=True):
+        frame = db.get_results(url, gender, drop_dnf, drop_dns)
+        #db.connect()
+        # cols = [ ... ]
+        # new_sales_file.columns = cols
+        
+        for i, row in enumerate(frame.to_dict(orient='records')):
+            # get or create runner_id for this name/eligibility/school combo (use get_runner_id)
+            runner_id = db.get_runner_id(row['NAME'], row['YEAR'], row['TEAM'])
+            # get or create race_id for this race/date combo
+            race_id = db.get_race_id(row['COURSE'], row['DATE']) # add distance
+            # fill in tables
+            row['runner_id'] = runner_id
+            row['race_id'] = race_id
+            try:
+                sql = '''
+                INSERT INTO tRaceResult (runner_id, race_id, time, raw_time, place) VALUES (:runner_id, :race_id, :CONVERTED, :TIME, :PL)
+                ;'''
+                db.curs.execute(sql, row) 
+            except Exception as e:
+                print(e)
+                print('\nrow: ', i)
+                print('\n', row)
+                db.conn.rollback() # Undo everything since the last commit 
+                db.close()
+                raise e
+        db.conn.commit()
+        db.close()
+        return None
 
 #getting full table with all data: 
 query = '''
@@ -30,8 +62,46 @@ FROM tRace
 ;'''
 race_data = db.run_query(race_names_query)
 
+#unique runners and teams for dropdown options
+runners_query = '''
+SELECT DISTINCT runner_id, name
+FROM tRunner
+;'''
+runners_data = db.run_query(runners_query)
+
+teams_query = '''
+SELECT DISTINCT school
+FROM tRunner
+;'''
+teams_data = db.run_query(teams_query)
+
+#combine runners and teams in one dropdown options list
+runner_team_options = [{'label':row['name'], 'value':f"runner_{row['runner_id']}"} for _, row in runners_data.iterrows()] + \
+                      [{'label':row['school'], 'value':f"team_{row['school']}"} for _, row in teams_data.iterrows()] 
+
+#Dash app layout                       
 app.layout = html.Div([
     html.H1("Race Data"),
+    
+    dcc.Dropdown(
+        id='gender-dropdown',
+        options=[
+            {'label':'Women', 'value':'women'},
+            {'label':'Men', 'value':'men'}
+        ],
+        value='women',
+    ),
+    
+    dcc.Input(
+        id='url-input',
+        type='text',
+        placeholder='Enter race URL...',
+        style={'width':'60%'}
+    ),
+    
+    html.Button('Scrape and Load Results', id='scrape-button'),
+    
+    html.Div(id='output'),
     
     #full data table
     html.Div([
@@ -69,9 +139,48 @@ app.layout = html.Div([
         html.Button("Compare Courses", id='compare-button', n_clicks=0),
         
         html.Div(id='comparison-result', style={'marginTop':'20px'}),
+    ]),
+    
+#predict runner or team times
+    html.Div([
+        html.H2("Predict Runner or Team Times on a Course"),
+        html.Label("Select Runner or Team:"),
+        dcc.Dropdown(
+            id='runner-team-dropdown',
+            options=runner_team_options, 
+            placeholder="Select a runner or team",
+        ),
+        html.Label("Select Course:"),
+        dcc.Dropdown(
+            id='predict-course-dropdown',
+            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
+            placeholder="Select a course",
+        ),
+        html.Button("Predict Times", id='predict-button', n_clicks=0),
+        html.Div(id='prediction-result', style={'marginTop':'20px'}),
     ])
 ])
 
+#callback for TFRRS URL
+@app.callback(
+    Output('output', 'children'),
+    [Input('scrape-button', 'n_clicks')],
+    [Input('gender-dropdown', 'value'), Input('url-input', 'value')]
+)
+
+def scrape_and_load_results(n_clicks, gender, url):
+    if n_clicks is None:
+        return ""
+    if not url:
+        return "Please provide a value race URL."
+    
+    try:
+        db.load_results(url, gender)
+        return f"Results successfully loaded for {gender} from the race at {url}"
+    except Exception as e:
+        return f"Error: {str(e)}"
+
+#callback for course comparisons
 @app.callback(
     Output('comparison-result', 'children',),
     Input('compare-button', 'n_clicks'),
@@ -132,6 +241,42 @@ def compare_course(n_clicks, course_one, course_two):
         html.P(f"Difference in Average Times: {difference:.2f} seconds"),
         html.P(f"Ratio of Average Times: {ratio:.2f}")
     ])
+
+#callback for predicting times
+@app.callback(
+    Output('prediction-result', 'children'),
+    Input('predict-button', 'n_clicks'),
+    State('runner-team-dropdown', 'value'),
+    State('predict-course-dropdown', 'value')
+)
+
+def predict_times(n_clicks, runner_team, course_id):
+    if not runner_team or not course_id:
+        return "Please select a runner/team and a course to predict."
+    
+    #determine if input is a runner or team
+    if runner_team.startswith("runner_"):
+        runner_id = runner_team.split("_")[1]
+        predictions_df = db.predict_times(course_id)
+        runner_prediction = predictions.df[predictions_df['runner_id'] == int(runner_id)]
+        if runner_prediction.empty:
+            return "No prediction available for this runner."
+        formatted_time = runner_prediction['formatted_time'].iloc[0]
+        return f"Prediction time: {formatted_time}"
+    elif runner_team.startswith('team_'):
+        team_name = runner_team.split("_")[1]
+        predictions_df = predictions_df.merge(
+            db.run_query('SELECT runner_id, school FROM tRunner WHERE school = ?', [team_name]), 
+            on = 'runner_id'
+        )
+        if team_predictions.empty:
+            return "No prediction available for this team."
+        team_avg_time = team_predictions['predicted_time'].mean()
+        minutes = int(team_avg_time // 60)
+        seconds = int(team_avg_time % 60)
+        return f"Prediction average time: {minutes}.{seconds:02d}"
+            
+    
      
 if __name__ == '__main__':
     app.run_server(debug=True)
