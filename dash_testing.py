@@ -80,99 +80,111 @@ runner_team_options = [{'label':row['name'], 'value':f"runner_{row['runner_id']}
                       [{'label':row['school'], 'value':f"team_{row['school']}"} for _, row in teams_data.iterrows()] 
 
 #Dash app layout                       
-app.layout = html.Div([
-    html.H1("Race Data"),
-    
-    dcc.Dropdown(
-        id='gender-dropdown',
-        options=[
-            {'label':'Women', 'value':'women'},
-            {'label':'Men', 'value':'men'}
-        ],
-        value='women',
-    ),
-    
-    dcc.Input(
-        id='url-input',
-        type='text',
-        placeholder='Enter race URL...',
-        style={'width':'60%'}
-    ),
-    
-    html.Button('Scrape and Load Results', id='scrape-button'),
-    
-    html.Div(id='output'),
-    
-    #full data table
-    html.Div([
-        html.H2("Complete Race Data"),
-        dash_table.DataTable(
-            id='race-table',
-            columns=[{"name":col, "id":col} for col in full_data.columns],
-            data=full_data.to_dict("records"),
-            style_table={"height": "500px", "overflowY": "auto"},
-            filter_action="native",
-            sort_action="native",
-            page_action="none"
-    )
-    ]),
-    
-    #course comparisons
-    html.Div([
-        html.H2("Compare Two Courses"),
-        
-        #dropdown menus
-        html.Label("Select First Course:"),
-        dcc.Dropdown(
-            id='course-one-dropdown',
-            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
-            placeholder="Select the first course",
-        ),
-        
-        html.Label("Select Second Course:"),
-        dcc.Dropdown(
-            id='course-two-dropdown',
-            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
-            placeholder="Select the second course",
-        ),
-        
-        html.Button("Compare Courses", id='compare-button', n_clicks=0),
-        
-        html.Div(id='comparison-result', style={'marginTop':'20px'}),
-    ]),
-    
-#predict runner or team times
-    html.Div([
-        html.H2("Predict Runner or Team Times on a Course"),
-        html.Label("Select Runner or Team:"),
-        dcc.Dropdown(
-            id='runner-team-dropdown',
-            options=runner_team_options, 
-            placeholder="Select a runner or team",
-        ),
-        html.Label("Select Course:"),
-        dcc.Dropdown(
-            id='predict-course-dropdown',
-            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
-            placeholder="Select a course",
-        ),
-        html.Button("Predict Times", id='predict-button', n_clicks=0),
-        html.Div(id='prediction-result', style={'marginTop':'20px'}),
-    ])
-])
-
+app.layout = html.Div(
+    [
+        dcc.Tabs(
+            [
+                dcc.Tab(
+                    label="Import Data",
+                    children=[
+                        html.H1("Race Data"),
+                        
+                        dcc.Dropdown(
+                            id='gender-dropdown',
+                            options=[
+                                {'label':'Women', 'value':'women'},
+                                {'label':'Men', 'value':'men'}
+                            ],
+                            value='women',
+                        ),
+                        dcc.Input(
+                            id='url-input',
+                            type='text',
+                            placeholder='Enter race URL...',
+                            style={'width':'60%'}
+                        ),
+                        html.Button('Scrape and Load Results', id='scrape-button'),
+                        html.Div(id='output'),
+                        
+                        html.Div(
+                            [
+                                html.H2("Complete Race Data"),
+                                dash_table.DataTable(
+                                    id='race-table',
+                                    columns=[{"name":col, "id":col} for col in full_data.columns],
+                                    data=full_data.to_dict("records"),
+                                    style_table={"height": "500px", "overflowY": "auto"},
+                                    filter_action="native",
+                                    sort_action="native",
+                                    page_action="none"
+                                )
+                            ]
+                        ),
+                    ]
+                ),
+                dcc.Tab(
+                    label="Compare Two Courses",
+                    children=[
+                        html.H2("Compare Two Courses"),
+                        html.P("Please select two courses to compare."),
+                        html.Label("Select First Course:"),
+                        #dropdown menus
+                        dcc.Dropdown(
+                            id='course-one-dropdown',
+                            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()
+                                    ],
+                            placeholder="Select the first course",
+                        ),
+                        html.Label("Select Second Course:"),
+                        dcc.Dropdown(
+                            id='course-two-dropdown',
+                            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()
+                                    ],
+                            placeholder="Select the second course",
+                        ),
+                        html.Button("Compare Courses", id='compare-button', n_clicks=0),
+                        html.Div(id='comparison-result', style={'marginTop':'20px'}),
+                    ]
+                ),
+                    dcc.Tab(
+                        label="Predict Times",
+                        children=[
+                            html.H2("Predict Runner or Team Times on a Course"),
+                            html.P("Please select a runner/team and a course to predict."),
+                            html.Div(id="instruction-message", style={'color': 'red', 'marginBottom':'10px'}),
+                            html.Label("Select Runner or Team:"),
+                            dcc.Dropdown(
+                                id='runner-team-dropdown',
+                                options=runner_team_options, 
+                                placeholder="Select a runner or team",
+                            ),
+                            html.Label("Select Course:"),
+                            dcc.Dropdown(
+                                id='predict-course-dropdown',
+                                options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()
+                                        ],
+                                placeholder="Select a course",
+                            ),
+                            html.Button("Predict Times", id='predict-button', n_clicks=0),
+                            html.Div(id='prediction-result', style={'marginTop':'20px'}),
+                        ]
+                    ),
+            ]
+        )
+    ]
+)              
 #callback for TFRRS URL
 @app.callback(
     Output('output', 'children'),
-    [Input('scrape-button', 'n_clicks')],
-    [Input('gender-dropdown', 'value'), Input('url-input', 'value')]
+    [Input('scrape-button', 'n_clicks'),
+     Input('gender-dropdown', 'value'), 
+     Input('url-input', 'value')]
 )
-
 def scrape_and_load_results(n_clicks, gender, url):
     if n_clicks is None:
         return ""
     if not url:
-        return "Please provide a value race URL."
+        return "Please provide a valid race URL."
     
     try:
         db.load_results(url, gender)
@@ -188,10 +200,7 @@ def scrape_and_load_results(n_clicks, gender, url):
     State('course-two-dropdown', 'value')
 )
 
-def compare_course(n_clicks, course_one, course_two):
-    if not course_one or not course_two:
-        return "Please select two courses to compare."
-    
+def compare_course(n_clicks, course_one, course_two):   
     sql = '''
     WITH CommonRunnersTable AS
     (
@@ -237,6 +246,8 @@ def compare_course(n_clicks, course_one, course_two):
     difference = results['Difference'].iloc[0]
     ratio = results['Ratio'].iloc[0]
     
+    
+    
     return html.Div([
         html.P(f"Difference in Average Times: {difference:.2f} seconds"),
         html.P(f"Ratio of Average Times: {ratio:.2f}")
@@ -244,16 +255,16 @@ def compare_course(n_clicks, course_one, course_two):
 
 #callback for predicting times
 @app.callback(
-    Output('prediction-result', 'children'),
-    Input('predict-button', 'n_clicks'),
-    State('runner-team-dropdown', 'value'),
-    State('predict-course-dropdown', 'value')
+    [Output('instruction-message', 'children'),
+     Output('prediction-result', 'children')],
+    [Input('runner-team-dropdown', 'value'),
+    Input('predict-course-dropdown', 'value')]
 )
 
-def predict_times(n_clicks, runner_team, course_id):
-    if not runner_team or not course_id:
-        return "Please select a runner/team and a course to predict."
-    
+def predict_times_callback(runner_team, course_id):    
+    #ensure both dropdowns have selected values
+    if not runner_team or not course:
+        return "Please select both a runner/team and a course to make a prediction.", None
     #determine if input is a runner or team
     if runner_team.startswith("runner_"):
         runner_id = runner_team.split("_")[1]
@@ -280,7 +291,3 @@ def predict_times(n_clicks, runner_team, course_id):
      
 if __name__ == '__main__':
     app.run_server(debug=True)
-    
-    
-##make font better
-##more functionality obviously
