@@ -281,19 +281,8 @@ class CoursesDB:
         ------------------------------------------------- STATISTICS --------------------------------------------------------------
         '''
 
-    def compare_two_courses(self, RaceIDOne, RaceIDTwo):  
-        '''
-        This function compares two courses specified by their race_id's.
-        It will output the difference in seconds in average race times (difference), the ratio of average race times (ratio), and
-        the number of runners in common between the two courses (NumCompared).
-        The first course is used as a comparison point. 'difference' is the number of seconds faster or slower that the second course
-        averages compared to the first course; a negative value for 'difference' means the second course was faster.
-        'ratio' is the number that times from the second course would need to be multiplied by in order to standardize them to the first 
-        course; the average time from the second course multiplied by 'ratio' should yield the average time from the first course.
-        This function only compares times in runners who competed in both meets. The number of runners in common is shown as NumCompared.
-        '''
+    def compare_two_courses(self, RaceIDOne, RaceIDTwo):  # need to change id to race name
 
-        
         sql = '''
         WITH CommonRunnersTable AS
         (
@@ -301,7 +290,6 @@ class CoursesDB:
             (
                     SELECT runner_id, race_id, COUNT(*) AS NumRaces
                     FROM tRaceResult
-                    WHERE race_id LIKE :RaceIDOne OR race_id LIKE :RaceIDTwo 
                     GROUP BY runner_id
                     HAVING NumRaces > 1 
             )
@@ -310,7 +298,7 @@ class CoursesDB:
         
         CourseOne AS
         (
-        SELECT Avg(time) AS AvgCourseOne, COUNT(*) AS NumCompared
+        SELECT Avg(time) AS AvgCourseOne
         FROM tRaceResult
         WHERE runner_id IN CommonRunnersTable AND race_id LIKE :RaceIDOne
         ),
@@ -324,14 +312,14 @@ class CoursesDB:
         
         BothCourses AS
         (
-        SELECT AvgCourseOne, AvgCourseTwo, NumCompared
+        SELECT AvgCourseOne, AvgCourseTwo
         FROM CourseOne
         JOIN CourseTwo
         )
         
-        SELECT AvgCourseOne - AvgCourseTwo AS Difference, AvgCourseOne / AvgCourseTwo AS Ratio, NumCompared
+        SELECT AvgCourseTwo - AvgCourseOne AS Difference, AvgCourseTwo / AvgCourseOne AS Ratio
         FROM BothCourses
-
+        
         ;'''
                     
         results = self.run_query(sql, {'RaceIDOne':RaceIDOne, 'RaceIDTwo':RaceIDTwo}) 
@@ -340,34 +328,23 @@ class CoursesDB:
 
 
     def see_loaded_races(self):
-        '''
-        See which races have been loaded into the database
-        '''
-        results = self.run_query('''SELECT * FROM tRace''')       
-        return results
 
+        results = self.run_query('''SELECT * FROM tRace''')
+        
+        return results
+    
     def course_lookup(self, partial_race_name):
         '''
         Find courses with partial_race_name as a keyword and return all results from that race
         '''
         sql = '''
         SELECT * FROM tRace
+        JOIN tRaceResult USING (race_id)
         WHERE race LIKE '%' || :partial_name || '%' 
         ;'''
         results = self.run_query(sql, {'partial_name': partial_race_name})
         return results
-
-    def runner_lookup(self, partial_runner_name):
-        '''
-        Find courses with partial_race_name as a keyword and return all results from that race
-        '''
-        sql = '''
-        SELECT * FROM tRunner
-        WHERE name LIKE '%' || :partial_name || '%' 
-        ;'''
-        results = self.run_query(sql, {'partial_name': partial_runner_name})
-        return results
-        
+    
     def find_races_in_common(self, runner_id_1, runner_id_2):
         '''
         Find all races that two runners have in common
@@ -386,4 +363,80 @@ class CoursesDB:
             ;'''
         results = self.run_query(sql, {'runner_id_1': runner_id_1, 'runner_id_2': runner_id_2})
         return results
+    
+    def predict_times(self, target_course_id):
+        '''
+        Predicts times for runners on a specific course
+        '''
+       
+        #gets all the runners who results from multiple races
+        sql = '''
+        SELECT tRaceResult.runner_id, tRunner.name, tRunner.school, tRaceResult.race_id, tRaceResult.time, tRaceResult.place
+        FROM tRaceResult
+        JOIN tRunner
+        ON tRaceResult.runner_id = tRunner.runner_id
+        WHERE tRaceResult.runner_id IN (
+            SELECT runner_id
+            FROM tRaceResult
+            GROUP BY runner_id
+            HAVING COUNT(race_id) > 1
+        )
+        ;'''
+   
+        shared_runners_df = self.run_query(sql)
+       
+        #groups data by course and gets average time for each course
+        avg_times_per_course = shared_runners_df.groupby('race_id')['time'].mean().reset_index()
+        avg_times_per_course.columns = ['race_id', 'avg_time'] #renaming columns
+       
+        #filter avg_time_per_course for race_id matching target_course_id in input
+        target_avg_time = avg_times_per_course[avg_times_per_course['race_id'] == target_course_id]['avg_time'].values[0]
+       
+        #creating a new column difficulty_ratio that takes course average times and divides in by the target course average time
+        #high difficulty ratio (>1) harder course, <1 easier course
+        avg_times_per_course['difficulty_ratio'] = avg_times_per_course['avg_time']/target_avg_time
+   
+        #merge difficulty ratios with dataframe obtained by sql query
+        shared_runners_ratios = pd.merge(
+        shared_runners_df,
+        avg_times_per_course[['race_id', 'difficulty_ratio']],
+        on = 'race_id',
+        how = 'left'
+        )
+   
+        #loops through dataframe for all unique runner ids and creates a predicted time by multiplying the course's difficulty ratio by the course time, then takes the average of the difficulty ratio-adjusted course times
+        predicted_times = []
+        for runner_id in shared_runners_ratios['runner_id'].unique():
+            runner_data = shared_runners_ratios[shared_runners_ratios['runner_id'] == runner_id]
+       
+            predicted_time = (runner_data['time'] * runner_data['difficulty_ratio']).mean()
+        
+            runner_name = runner_data['name'].iloc[0]
+            
+            runner_school = runner_data['school'].iloc[0]
+           
+            
+            #convert to minutes:seconds format
+            minutes = int(predicted_time // 60)
+            seconds = int(predicted_time % 60)
+            formatted_time = f"{minutes}:{seconds:02d}"
+       
+            predicted_times.append({'runner_id': runner_id, 
+                                    'name': runner_name, 
+                                    'school': runner_school, 
+                                    'predicted_time': predicted_time, 
+                                    'formatted_time': formatted_time})
+ 
+        predictions_df = pd.DataFrame(predicted_times)
+   
+        return predictions_df
+
+    def predict_team_results(self, school, course_id):
+        predictions_df = self.predict_times(course_id)
+        
+        team_results = predictions_df[predictions_df['school'] == school]
+        
+        team_results = team_results[['runner_id', 'name', 'predicted_time', 'formatted_time']]
+        
+        return team_results
         
