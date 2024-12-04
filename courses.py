@@ -431,6 +431,112 @@ class CoursesDB:
    
         return predictions_df
 
+
+    def conversions(self, primary_race_id):
+        '''
+        connects courses together to compare times
+        User specifies one race they want to be the point of comparison. All other courses are given a ratio based on how much 
+        faster or slower they are from the specified course, as well as a number of seconds faster or slower they are. Results
+        are outputed in a dataframe. Ratios will be more accurate than time differences due to varying speeds of runners
+        '''
+
+        coursesdf = self.see_loaded_races() # look up all the courses loaded into the database
+        num_races = len(coursesdf) # find number of races loaded
+        if primary_race_id > num_races: # error prevention
+            print('Race ID out of range')
+            return None
+        convert_ratio = [None] * num_races # create a list of the right length
+        coursesdf['ratio_conversion'] = convert_ratio # use this list to add a new column to the df for conversions
+        coursesdf.loc[coursesdf['race_id'] == primary_race_id, 'ratio_conversion'] = 1 # set the primary course ratio as 1
+        convert_time = [None] * num_races
+        coursesdf['time_conversion'] = convert_time
+        coursesdf.loc[coursesdf['race_id'] == primary_race_id, 'time_conversion'] = 0 # set the primary course time difference as 0
+        
+        
+        # select all the courses except the one listed as primary
+        course_list = self.run_query('''
+            SELECT race_id
+            FROM tRace
+            WHERE race_id NOT LIKE :primary_race
+            ;''',
+            {"primary_race":primary_race_id})['race_id'].tolist()
+
+        # find all the courses that share at least 15 runners with the primary
+        secondary_list = []
+        non_secondary_list = []
+        for id in course_list:
+            common = self.run_query('''
+                WITH CommonRunnersList AS
+                (
+                        SELECT runner_id, race_id, COUNT(*) AS NumRaces
+                        FROM tRaceResult
+                        WHERE race_id LIKE :RaceIDOne OR race_id LIKE :RaceIDTwo 
+                        GROUP BY runner_id
+                        HAVING NumRaces > 1 
+                )
+                
+                SELECT COUNT(runner_id) AS CommonRunners
+                FROM CommonRunnersList
+                ;''',
+                {'RaceIDOne':primary_race_id, 'RaceIDTwo':id}).iat[0,0] # the .iat[0,0] part grabs the value from the df
+            if common > 14:
+                secondary_list.append(id)
+            else: 
+                non_secondary_list.append(id)
+
+        for item in secondary_list:
+            secondary_race_id = item
+            # run the comparison function for each race with enough runners in common with primary race
+            results = self.compare_two_courses(primary_race_id, secondary_race_id) 
+            
+            time_diff = results.loc[0,'Difference'] # from the results, grab the average difference in seconds
+            coursesdf.loc[coursesdf['race_id'] == secondary_race_id, 'time_conversion'] = time_diff
+            
+            ratio = results.loc[0,'Ratio'] # from the results, grab the average ratio difference
+            coursesdf.loc[coursesdf['race_id'] == secondary_race_id, 'ratio_conversion'] = ratio
+
+        # iterate thru all the teriary races
+        for item in non_secondary_list:
+            tertiary_race_id = item
+
+            # select all the courses except the current tertiary one
+            courses = self.run_query('''
+                SELECT race_id
+                FROM tRace
+                WHERE race_id NOT LIKE :this_race
+                ;''',
+                {"this_race":tertiary_race_id})['race_id'].tolist()
+
+            tertiary_table = pd.DataFrame(columns = ['Difference', 'Ratio', 'NumCompared'])
+
+            # for each tertiary race, go through all the non-tertiary races to find the ratios and differences
+            for race in courses:
+                results = self.compare_two_courses(race, tertiary_race_id) # run the comparison function on each course
+                tertiary_table = pd.concat([tertiary_table, results], ignore_index=True)
+
+            # merge data for tertiary table with data from all courses in order to do calculations
+            tertiary_table['race_id'] = courses
+            tertiary_table = pd.merge(
+                tertiary_table,
+                coursesdf[['race_id','ratio_conversion','time_conversion']],
+                on = 'race_id',
+                how = 'inner')
+        
+            this_ratio = 0
+            this_diff = 0
+            total_comparisons = tertiary_table['NumCompared'].sum() # find the total number of runners compared - used to weight each race average
+    
+            for row in tertiary_table.itertuples(index=False): # iterate thru tuples to calculate
+                this_ratio += row.Ratio*row.ratio_conversion*row.NumCompared/total_comparisons # new ratio is primary:secondary * secondary:teriary * weight
+                this_diff += (row.Difference + row.time_conversion)*row.NumCompared/total_comparisons 
+                # new time diff is ((secondary - primary) + (teriary - secondary)) * weight based on number of runners compared
+
+            coursesdf.loc[coursesdf['race_id'] == tertiary_race_id, 'ratio_conversion'] = this_ratio # add calculated ratio to dataframe
+            coursesdf.loc[coursesdf['race_id'] == tertiary_race_id, 'time_conversion'] = this_diff # add calculated time difference to dataframe
+
+        return coursesdf
+    
+    
     def predict_team_results(self, school, course_id):
         predictions_df = self.predict_times(course_id)
         
