@@ -218,7 +218,7 @@ def compare_course(n_clicks, course_one, course_two):
     Input('prediction-result', 'n_clicks'),
     State('course-dropdown', 'value')
 )
-
+## THIS IS NOT DONE!!!!!!!
 def predict_times_callback(n_clicks, target_course_id):    
     if not n_clicks or target_course_id is None:
         return "Click 'Predict Times' after selecting a course."
