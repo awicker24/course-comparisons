@@ -2,6 +2,13 @@
 ## Description
 This repository contains files that can be used for the scraping and analyzing of results data from cross country races. Ultimately, the files will enable a user to run virtual meets, standardize courses of varying difficulty, and track runner improvement throughout the season.
 
+## Quick Start Guide
+To see an example of the database and the querying functions, download `courses.py` and `CourseFunctions.ipynb` in the same folder. Follow the instructions in the notebook to create the database, load the data, and see the querying functions in action. 
+
+All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. To load a race or races of interest, copy the results URL from TFRRS and enter it as an argument to the Begin `db.load_results` function. 
+
+To explore the dashboard, download `dash_testing.py` to the same folder as `courses.py`. Navigate to the files' directory via the command line (example: `cd '/Users/anniewicker/Desktop/23-24/Fall_24/Automation'`). Then type ``python dash_testing.py`. A link like this should appear in the output: http://127.0.0.1:8050/. Paste this into your browser to load and interact with the dashboard. 
+
 ## Getting Started
 `courses.py` creates and maintains a database of all user-inputted TFRRS data. It incorporates a webscraping script to load the data into the database, and contains functions for running queries on the database. The webscraping script, `tffrsdatascraping.py`, takes a URL from the Track and Field Results Reporting System (TFRRS) and scrapes the data from that race. The function defaults to scraping women's results, but the 'gender' argument can be changed to gender=men for men's results. It automatically drops racers' times who did not start (DNS) or did not finish (DNF) the race. 
 `see_loaded_races` allows the user to check which races have been loaded into the database. `course_lookup` and `runner_lookup` allow a user to input part of a course's or runner's name to find all the records that match that snipit. Because one course can host multiple races, the `course_lookup` function is especially useful for users who want to compare times on the same course at different points in a season. `find_races_in_common` is a function that takes two unique runner IDs as inputs and outputs all of the races that those two runners have run in together. The `compare_two_courses` function takes two unique race IDs as inputs, and returns the difference in average time and the time ratio between two races, as well as the number of runners in common between the two. This function only compares races with **at least one** runner in common. 
@@ -17,7 +24,3 @@ Begin by downloading both the `courses.py` file and the `CourseFunctions.ipynb` 
 All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. Begin entering data into the database by running the `db.load_results` function with a race page URL for each race you would like to load into the database. You should only run the code once for each URL, otherwise an error will appear. Once all the data has been loaded, you can see the full database by running the next block of code.
 
 The following blocks of code showcase examples of the functions described in the section above. The user can adjust the inputs to find specific information of interest.
-
-## For Arianna re dashboard
-So if you download the dash_testing.py file, then cd to whatever directory it's in via the command line (for me its `cd '/Users/anniewicker/Desktop/23-24/Fall_24/Automation'`, then type `python dash_testing.py` you should see a link like this http://127.0.0.1:8050/ somewhere in the output. You should be able to paste that into your browser and see the dashboard. You have to have it running in your command line, though - just clicking that link from here won't work. 
-
