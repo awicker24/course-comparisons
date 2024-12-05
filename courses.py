@@ -344,6 +344,19 @@ class CoursesDB:
         ;'''
         results = self.run_query(sql, {'partial_name': partial_race_name})
         return results
+
+
+    def runner_lookup(self, partial_runner_name):
+        '''
+        Find courses with partial_race_name as a keyword and return all results from that race
+        '''
+        sql = '''
+        SELECT * FROM tRunner
+        WHERE name LIKE '%' || :partial_name || '%' 
+        ;'''
+        results = self.run_query(sql, {'partial_name': partial_runner_name})
+        return results
+
     
     def find_races_in_common(self, runner_id_1, runner_id_2):
         '''
