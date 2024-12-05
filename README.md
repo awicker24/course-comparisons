@@ -3,7 +3,7 @@
 This repository contains files that can be used for the scraping and analyzing of results data from cross country races. Ultimately, the files will enable a user to run virtual meets, standardize courses of varying difficulty, and track runner improvement throughout the season.
 
 ## Quick Start Guide
-We did not include any pipenv setup files for this, so ensure that the necessary libraries (are installed to avoid errors. 
+We did not include any pipenv setup files for this, so ensure that the necessary libraries (sqlite3, pandas, os, numpy, glob, shutil, BeautifulSoup, requestsare). 
 
 To see an example of the database and the querying functions, download `courses.py` and `CourseFunctions.ipynb` in the same folder. Follow the instructions in the notebook to create the database, load the data, and see the querying functions in action. 
 
