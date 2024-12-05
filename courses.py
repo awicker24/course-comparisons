@@ -506,16 +506,17 @@ class CoursesDB:
                 WHERE race_id NOT LIKE :this_race
                 ;''',
                 {"this_race":tertiary_race_id})['race_id'].tolist()
+            courses_to_compare = list(set(courses) - set(non_secondary_list)) #remove all other tertiary courses
 
             tertiary_table = pd.DataFrame(columns = ['Difference', 'Ratio', 'NumCompared'])
 
             # for each tertiary race, go through all the non-tertiary races to find the ratios and differences
-            for race in courses:
+            for race in courses_to_compare:
                 results = self.compare_two_courses(race, tertiary_race_id) # run the comparison function on each course
                 tertiary_table = pd.concat([tertiary_table, results], ignore_index=True)
 
             # merge data for tertiary table with data from all courses in order to do calculations
-            tertiary_table['race_id'] = courses
+            tertiary_table['race_id'] = courses_to_compare
             tertiary_table = pd.merge(
                 tertiary_table,
                 coursesdf[['race_id','ratio_conversion','time_conversion']],
