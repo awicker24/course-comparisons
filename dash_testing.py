@@ -245,9 +245,7 @@ def compare_course(n_clicks, course_one, course_two):
         return "No data available for comparison."
     difference = results['Difference'].iloc[0]
     ratio = results['Ratio'].iloc[0]
-    
-    
-    
+
     return html.Div([
         html.P(f"Difference in Average Times: {difference:.2f} seconds"),
         html.P(f"Ratio of Average Times: {ratio:.2f}")
