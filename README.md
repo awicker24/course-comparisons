@@ -8,6 +8,8 @@ This repository contains files that can be used for the scraping and analyzing o
 
 `CourseFunctions.ipynb` provides a sample use of the database in its full functionality. This file contains example outputs of all the functions being run on a database with loaded races. 
 
+`dash_testing.py` contains code for an interactive app built using Dash. The dashboard is a work in progress, and will be the final product of our project. 
+
 ## Using the Program
 
 Begin by downloading both the `courses.py` file and the `CourseFunctions.ipynb` notebook in the same folder. The `courses.py` file contains the functions which allow the user to create and query the database, but all commands to access this code will be run from the `CourseFunctions.ipynb` notebook. Load the necessary libraries by running the first two blocks of code, then initialize the database by running the third block with the 'create' argument set to True. After initializing the database, run the next block of code to create the tables. You are now ready to begin loading data into the database.
