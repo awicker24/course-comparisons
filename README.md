@@ -5,7 +5,7 @@ This repository contains files that can be used for the scraping and analyzing o
 ## Quick Start Guide
 To see an example of the database and the querying functions, download `courses.py` and `CourseFunctions.ipynb` in the same folder. Follow the instructions in the notebook to create the database, load the data, and see the querying functions in action. 
 
-All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. To load a race or races of interest, copy the results URL from TFRRS and enter it as an argument to the Begin `db.load_results` function. 
+All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. To load a race or races of interest, copy the results URL from TFRRS and enter it as an argument to the `db.load_results` function. 
 
 To explore the dashboard, download `dash_testing.py` to the same folder as `courses.py`. Navigate to the files' directory via the command line (example: `cd '/Users/anniewicker/Desktop/23-24/Fall_24/Automation'`). Then type ``python dash_testing.py`. A link like this should appear in the output: http://127.0.0.1:8050/. Paste this into your browser to load and interact with the dashboard. 
 
