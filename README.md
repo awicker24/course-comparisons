@@ -3,6 +3,8 @@
 This repository contains files that can be used for the scraping and analyzing of results data from cross country races. Ultimately, the files will enable a user to run virtual meets, standardize courses of varying difficulty, and track runner improvement throughout the season.
 
 ## Quick Start Guide
+We did not include any pipenv setup files for this, so ensure that the necessary libraries (are installed to avoid errors. 
+
 To see an example of the database and the querying functions, download `courses.py` and `CourseFunctions.ipynb` in the same folder. Follow the instructions in the notebook to create the database, load the data, and see the querying functions in action. 
 
 All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. To load a race or races of interest, copy the results URL from TFRRS and enter it as an argument to the `db.load_results` function. 
