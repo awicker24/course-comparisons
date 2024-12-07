@@ -1,6 +1,6 @@
 # Cross Country Course Comparisons
 ## Description
-This repository contains files that can be used for the scraping and analyzing of results data from cross country races. Ultimately, the files will enable a user to run virtual meets, standardize courses of varying difficulty, and track runner improvement throughout the season.
+This repository contains files that can be used for the scraping and analyzing of results data from cross country races. Currently, the files allow for direct comparison of two races based on results from runners who competed in both. Ultimately, the files will enable a user to run virtual meets, standardize several courses of varying difficulty, and track runner improvement throughout the season.
 
 ## Quick Start Guide
 We did not include any pipenv setup files for this, so ensure that the necessary libraries (`pip install pandas`, `pip install numpy`, `pip install beautifulsoup4 as bs4`, `pip install requests`). 
@@ -26,3 +26,4 @@ Begin by downloading both the `courses.py` file and the `CourseFunctions.ipynb` 
 All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. Begin entering data into the database by running the `db.load_results` function with a race page URL for each race you would like to load into the database. You should only run the code once for each URL, otherwise an error will appear. Once all the data has been loaded, you can see the full database by running the next block of code.
 
 The following blocks of code showcase examples of the functions described in the section above. The user can adjust the inputs to find specific information of interest.
+
