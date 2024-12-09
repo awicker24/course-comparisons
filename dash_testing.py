@@ -215,17 +215,18 @@ def compare_course(n_clicks, course_one, course_two):
 #callback for predicting times
 @app.callback(
     Output('prediction-result', 'children'),
-    Input('prediction-result', 'n_clicks'),
+    Input('predict-button', 'n_clicks'),
     State('course-dropdown', 'value')
 )
-## THIS IS NOT DONE!!!!!!!
+
 def predict_times_callback(n_clicks, target_course_id):    
     if not n_clicks or target_course_id is None:
         return "Click 'Predict Times' after selecting a course."
     try:
-        predictions_df = db.predict_times(course_id)
+        predictions_df = db.predict_times(target_course_id)
         return html.Div([
-            html.H3("Predicted Times:"),
+            html.H3(""),
+            html.P("Filter for a specific runner or team by typing underneath the column name."),
             dash_table.DataTable(
                 data=predictions_df.to_dict('records'),
                 columns=[
@@ -233,7 +234,9 @@ def predict_times_callback(n_clicks, target_course_id):
                     {'name': 'Name', 'id': 'name'},
                     {'name': 'School', 'id': 'school'},
                     {'name': 'Predicted Time', 'id': 'formatted_time'}
-                ]
+                ],
+                filter_action="native",
+                sort_action="native",
             )
         ])
     except Exception as e:
