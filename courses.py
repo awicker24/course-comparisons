@@ -281,8 +281,19 @@ class CoursesDB:
         ------------------------------------------------- STATISTICS --------------------------------------------------------------
         '''
 
-    def compare_two_courses(self, RaceIDOne, RaceIDTwo):  # need to change id to race name
+    def compare_two_courses(self, RaceIDOne, RaceIDTwo):  
+        '''
+        This function compares two courses specified by their race_id's.
+        It will output the difference in seconds in average race times (difference), the ratio of average race times (ratio), and
+        the number of runners in common between the two courses (NumCompared).
+        The first course is used as a comparison point. 'difference' is the number of seconds faster or slower that the second course
+        averages compared to the first course; a negative value for 'difference' means the second course was faster.
+        'ratio' is the number that times from the second course would need to be multiplied by in order to standardize them to the first 
+        course; the average time from the second course multiplied by 'ratio' should yield the average time from the first course.
+        This function only compares times in runners who competed in both meets. The number of runners in common is shown as NumCompared.
+        '''
 
+        
         sql = '''
         WITH CommonRunnersTable AS
         (
@@ -290,6 +301,7 @@ class CoursesDB:
             (
                     SELECT runner_id, race_id, COUNT(*) AS NumRaces
                     FROM tRaceResult
+                    WHERE race_id LIKE :RaceIDOne OR race_id LIKE :RaceIDTwo 
                     GROUP BY runner_id
                     HAVING NumRaces > 1 
             )
@@ -298,7 +310,7 @@ class CoursesDB:
         
         CourseOne AS
         (
-        SELECT Avg(time) AS AvgCourseOne
+        SELECT Avg(time) AS AvgCourseOne, COUNT(*) AS NumCompared
         FROM tRaceResult
         WHERE runner_id IN CommonRunnersTable AND race_id LIKE :RaceIDOne
         ),
@@ -312,19 +324,20 @@ class CoursesDB:
         
         BothCourses AS
         (
-        SELECT AvgCourseOne, AvgCourseTwo
+        SELECT AvgCourseOne, AvgCourseTwo, NumCompared
         FROM CourseOne
         JOIN CourseTwo
         )
         
-        SELECT AvgCourseTwo - AvgCourseOne AS Difference, AvgCourseTwo / AvgCourseOne AS Ratio
+        SELECT AvgCourseOne - AvgCourseTwo AS Difference, AvgCourseOne / AvgCourseTwo AS Ratio, NumCompared
         FROM BothCourses
-        
+
         ;'''
                     
         results = self.run_query(sql, {'RaceIDOne':RaceIDOne, 'RaceIDTwo':RaceIDTwo}) 
         
         return results
+
 
 
     def see_loaded_races(self):
