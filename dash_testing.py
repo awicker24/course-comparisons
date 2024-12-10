@@ -72,8 +72,8 @@ app.layout = html.Div(
                             placeholder='Enter race URL...',
                             style={'width':'60%'}
                         ),
-                        html.Button('Scrape and Load Results', id='scrape-button'),
-                        html.Div(id='output'),
+                        html.Button("Scrape and Load Results", id="scrape-button"),
+                        html.Div(id="output"),
                         html.Div(
                             [
                                 html.H2("Complete Race Data"),
@@ -98,36 +98,43 @@ app.layout = html.Div(
                         #dropdown menus
                         dcc.Dropdown(
                             id='course-one-dropdown',
-                            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()
-                                    ],
+                            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
                             placeholder="Select the first course",
                         ),
                         html.Label("Select Second Course:"),
                         dcc.Dropdown(
                             id='course-two-dropdown',
-                            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()
-                                    ],
+                            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
                             placeholder="Select the second course",
                         ),
                         html.Button("Compare Courses", id='compare-button', n_clicks=0),
                         html.Div(id='comparison-result', style={'marginTop':'20px'}),
+                        
+                        html.H2("Compare All Courses"),
+                        html.P("Select one course as a point of comparison. Courses must have a minimum of 15 runners in common to be comparable."),
+                        dcc.Dropdown(
+                            id="full-course-dropdown",
+                            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
+                            placeholder="Select a course",
+                        ),
+                        html.Button("Compare", id="full-compare-button"),
+                        html.Div(id="output-2"),
                     ]
                 ),
-                    dcc.Tab(
-                        label="Predict Times",
-                        children=[
-                            html.H2("Predict Runner Times on a Course"),
-                            html.P("Please select a course to predict."),
-                            dcc.Dropdown(
-                                id='course-dropdown',
-                                options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()
-                                    ],
-                                placeholder="Select race",
-                            ),
-                            html.Button("Predict Times", id='predict-button', n_clicks=0),
-                            html.Div(id='prediction-result', style={'marginTop':'20px'}),
-                        ]
-                    ),
+                dcc.Tab(
+                    label="Predict Times",
+                    children=[
+                        html.H2("Predict Runner Times on a Course"),
+                        html.P("Select a course to predict."),
+                        dcc.Dropdown(
+                            id='course-dropdown',
+                            options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
+                            placeholder="Select race",
+                        ),
+                        html.Button("Predict Times", id='predict-button', n_clicks=0),
+                        html.Div(id='prediction-result', style={'marginTop':'20px'}),
+                    ]
+                ),
             ]
         )
     ]
@@ -212,6 +219,39 @@ def compare_course(n_clicks, course_one, course_two):
         html.P(f"Ratio of Average Times: {ratio:.2f}")
     ])
 
+#callback for full course comparison (conversions function)
+@app.callback(
+    Output("output-2", "children"),
+    Input("full-compare-button", "n_clicks"),
+    State("full-course-dropdown", "value")
+)
+
+def conversions_callback(n_clicks, primary_race_id, min_comparisons=15):
+    if not n_clicks or primary_race_id is None:
+        return "Click compare."
+    
+    try: 
+        courses_df = db.conversions(primary_race_id)
+        return html.Div([
+            html.H3(""),
+            dash_table.DataTable(
+                data=courses_df.to_dict("records"),
+                columns=[
+                    {"name":"Race ID", "id": "race_id"},
+                    {"name":"Race", "id":"race"},
+                    {"name":"Date", "id":"date"},
+                    {"name":"Ratio", "id":"ratio_conversion"},
+                    {"name":"Time", "id":"time_conversion"}
+                ],
+                filter_action="native",
+                sort_action="native",
+            )
+        ])
+    except Exception as e:
+        print(f"Error: {e}")
+        return f"Error: {str(e)}"
+        
+                    
 #callback for predicting times
 @app.callback(
     Output('prediction-result', 'children'),
