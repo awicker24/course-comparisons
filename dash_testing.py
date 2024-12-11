@@ -20,9 +20,10 @@ db_file = 'courses.db'
 if os.path.exists(db_file):
     db = courses.CoursesDB('courses.db', create = False)
 else:
-    db = courses.CoursesDB('courses.db', create = True)
-    db.drop_all_tables(are_you_sure=True)
-    db.build_tables() 
+    print("No database found. Download the courses.db file from the Github repository.")
+    #db = courses.CoursesDB('courses.db', create = True)
+    #db.drop_all_tables(are_you_sure=True)
+    #db.build_tables() 
 
 '''----------------Simple Query Functions----------------'''
 
@@ -58,6 +59,8 @@ teams_data = db.run_query(teams_query)
 runner_team_options = [{'label':row['name'], 'value':f"runner_{row['runner_id']}"} for _, row in runners_data.iterrows()] + \
                       [{'label':row['school'], 'value':f"team_{row['school']}"} for _, row in teams_data.iterrows()] 
 
+initial_data = db.run_query(query).to_dict("records")
+
 #Dash app layout                       
 app.layout = html.Div(
     [
@@ -89,7 +92,8 @@ app.layout = html.Div(
                                 dash_table.DataTable(
                                     id='race-table',
                                     columns=[{"name":col, "id":col} for col in db.run_query(query).columns],
-                                    data=[],#full_data.to_dict("records"),
+                                    data=initial_data,
+                                    #db.run_query(query).to_dict("records"),
                                     style_table={"height": "500px", "overflowY": "auto"},
                                     filter_action="native",
                                     sort_action="native",
@@ -150,26 +154,47 @@ app.layout = html.Div(
 )              
 #callback for TFRRS URL
 @app.callback(
-    [Output('output', 'children'),
-     Output('race-table', 'data')],
-    Input('scrape-button', 'n_clicks'),
-     [State('gender-dropdown', 'value'), 
-     State('url-input', 'value')]
+    Output("race-table", "data"),
+    [Input("scrape-button", "n_clicks")],
+    [State("gender-dropdown", "value"),
+     State("url-input", "value")]
 )
-def scrape_and_load_results(n_clicks, gender, url):
+def load_or_scrape_data(n_clicks, gender, url):
     if n_clicks is None:
-        return "", []
+        initial_data = db.run_query(query)
+        return initial_data.to_dict("records")
+    
     if not url:
-        return "Please provide a valid race URL.", []
+        return []
+    
     try:
         db.load_results(url, gender)
-        updated_data=db.run_query(query)
-        return (
-            f"Results successfully loaded for {gender} from the race at {url}",
-            updated_data.to_dict("records"),
-        )
+        updated_data = db.run_query(query)
+        return updated_data.to_dict("records")
     except Exception as e:
-        return f"Error: {str(e)}", []
+        return []
+    
+# @app.callback(
+#     [Output('output', 'children'),
+#      Output('race-table', 'data')],
+#     Input('scrape-button', 'n_clicks'),
+#      [State('gender-dropdown', 'value'), 
+#      State('url-input', 'value')]
+# )
+# def scrape_and_load_results(n_clicks, gender, url):
+#     if n_clicks is None:
+#         return "", []
+#     if not url:
+#         return "Please provide a valid race URL.", []
+#     try:
+#         db.load_results(url, gender)
+#         updated_data=db.run_query(query)
+#         return (
+#             f"Results successfully loaded for {gender} from the race at {url}",
+#             updated_data.to_dict("records"),
+#         )
+#     except Exception as e:
+#         return f"Error: {str(e)}", []
 
 #callback for course comparisons
 @app.callback(
