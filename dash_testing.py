@@ -7,13 +7,22 @@ import dash
 from dash import Dash, dcc, html, Input, Output, State, callback, dash_table
 from urllib.parse import urlparse
 import plotly.express as px
+import os
 
 #initialize the app
 app = Dash(__name__)
     
 app.title = 'Course Comparisons'
 
-db = courses.CoursesDB('courses.db', create = False)
+db_file = 'courses.db'
+#db = courses.CoursesDB('courses.db', create = False)
+
+if os.path.exists(db_file):
+    db = courses.CoursesDB('courses.db', create = False)
+else:
+    db = courses.CoursesDB('courses.db', create = True)
+    db.drop_all_tables(are_you_sure=True)
+    db.build_tables() 
 
 '''----------------Simple Query Functions----------------'''
 
@@ -23,7 +32,7 @@ SELECT * FROM tRunner
 JOIN tRaceResult USING (runner_id)
 JOIN tRace USING (race_id)
 ;'''
-full_data = db.run_query(query)
+#full_data = db.run_query(query)
 
 #getting unique race names from dropdown options
 race_names_query = '''
@@ -79,8 +88,8 @@ app.layout = html.Div(
                                 html.H2("Complete Race Data"),
                                 dash_table.DataTable(
                                     id='race-table',
-                                    columns=[{"name":col, "id":col} for col in full_data.columns],
-                                    data=full_data.to_dict("records"),
+                                    columns=[{"name":col, "id":col} for col in db.run_query(query).columns],
+                                    data=[],#full_data.to_dict("records"),
                                     style_table={"height": "500px", "overflowY": "auto"},
                                     filter_action="native",
                                     sort_action="native",
@@ -141,21 +150,26 @@ app.layout = html.Div(
 )              
 #callback for TFRRS URL
 @app.callback(
-    Output('output', 'children'),
-    [Input('scrape-button', 'n_clicks'),
-     Input('gender-dropdown', 'value'), 
-     Input('url-input', 'value')]
+    [Output('output', 'children'),
+     Output('race-table', 'data')],
+    Input('scrape-button', 'n_clicks'),
+     [State('gender-dropdown', 'value'), 
+     State('url-input', 'value')]
 )
 def scrape_and_load_results(n_clicks, gender, url):
     if n_clicks is None:
-        return ""
+        return "", []
     if not url:
-        return "Please provide a valid race URL."
+        return "Please provide a valid race URL.", []
     try:
         db.load_results(url, gender)
-        return f"Results successfully loaded for {gender} from the race at {url}"
+        updated_data=db.run_query(query)
+        return (
+            f"Results successfully loaded for {gender} from the race at {url}",
+            updated_data.to_dict("records"),
+        )
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Error: {str(e)}", []
 
 #callback for course comparisons
 @app.callback(
