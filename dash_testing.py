@@ -15,17 +15,11 @@ app = Dash(__name__)
 app.title = 'Course Comparisons'
 
 db_file = 'courses.db'
-#db = courses.CoursesDB('courses.db', create = False)
 
 if os.path.exists(db_file):
     db = courses.CoursesDB('courses.db', create = False)
 else:
-    print("No database found. Download the courses.db file from the Github repository.")
-    #db = courses.CoursesDB('courses.db', create = True)
-    #db.drop_all_tables(are_you_sure=True)
-    #db.build_tables() 
-
-'''----------------Simple Query Functions----------------'''
+    print("!!!!No database found. Download the courses.db file from the Github repository!!!!")
 
 #getting full table with all data: 
 query = '''
@@ -33,7 +27,7 @@ SELECT * FROM tRunner
 JOIN tRaceResult USING (runner_id)
 JOIN tRace USING (race_id)
 ;'''
-#full_data = db.run_query(query)
+initial_data = db.run_query(query).to_dict("records")
 
 #getting unique race names from dropdown options
 race_names_query = '''
@@ -55,12 +49,6 @@ FROM tRunner
 ;'''
 teams_data = db.run_query(teams_query)
 
-#combine runners and teams in one dropdown options list
-runner_team_options = [{'label':row['name'], 'value':f"runner_{row['runner_id']}"} for _, row in runners_data.iterrows()] + \
-                      [{'label':row['school'], 'value':f"team_{row['school']}"} for _, row in teams_data.iterrows()] 
-
-initial_data = db.run_query(query).to_dict("records")
-
 #Dash app layout                       
 app.layout = html.Div(
     [
@@ -69,7 +57,7 @@ app.layout = html.Div(
                 dcc.Tab(
                     label="Import Data",
                     children=[
-                        html.H1("Race Data"),
+                        html.H1("Race Results"),
                         dcc.Dropdown(
                             id='gender-dropdown',
                             options=[
@@ -88,12 +76,10 @@ app.layout = html.Div(
                         html.Div(id="output"),
                         html.Div(
                             [
-                                html.H2("Complete Race Data"),
                                 dash_table.DataTable(
                                     id='race-table',
                                     columns=[{"name":col, "id":col} for col in db.run_query(query).columns],
                                     data=initial_data,
-                                    #db.run_query(query).to_dict("records"),
                                     style_table={"height": "500px", "overflowY": "auto"},
                                     filter_action="native",
                                     sort_action="native",
@@ -104,17 +90,16 @@ app.layout = html.Div(
                     ]
                 ),
                 dcc.Tab(
-                    label="Compare Two Courses",
+                    label="Compare Courses",
                     children=[
                         html.H2("Compare Two Courses"),
-                        html.P("Please select two courses to compare."),
+                        html.P("Select two courses to compare."),
                         #dropdown menus
                         dcc.Dropdown(
                             id='course-one-dropdown',
                             options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
                             placeholder="Select the first course",
                         ),
-                        html.Label("Select Second Course:"),
                         dcc.Dropdown(
                             id='course-two-dropdown',
                             options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
@@ -131,6 +116,7 @@ app.layout = html.Div(
                             placeholder="Select a course",
                         ),
                         html.Button("Compare", id="full-compare-button"),
+                        html.P("To estimate a runner's time in a different race, multiply their time for the primary race by the ratio. Their time combines how many seconds you'd have to add or subtract to the average person's time in the primary race to estimate their time in the secondary race. If no ratios or times besides 0 and 1 are shown in the table, there were not enough runners in common between the races."),
                         html.Div(id="output-2"),
                     ]
                 ),
@@ -173,28 +159,6 @@ def load_or_scrape_data(n_clicks, gender, url):
         return updated_data.to_dict("records")
     except Exception as e:
         return []
-    
-# @app.callback(
-#     [Output('output', 'children'),
-#      Output('race-table', 'data')],
-#     Input('scrape-button', 'n_clicks'),
-#      [State('gender-dropdown', 'value'), 
-#      State('url-input', 'value')]
-# )
-# def scrape_and_load_results(n_clicks, gender, url):
-#     if n_clicks is None:
-#         return "", []
-#     if not url:
-#         return "Please provide a valid race URL.", []
-#     try:
-#         db.load_results(url, gender)
-#         updated_data=db.run_query(query)
-#         return (
-#             f"Results successfully loaded for {gender} from the race at {url}",
-#             updated_data.to_dict("records"),
-#         )
-#     except Exception as e:
-#         return f"Error: {str(e)}", []
 
 #callback for course comparisons
 @app.callback(
@@ -241,12 +205,11 @@ def compare_course(n_clicks, course_one, course_two):
     
     SELECT AvgCourseTwo - AvgCourseOne AS Difference, AvgCourseTwo / AvgCourseOne AS Ratio
     FROM BothCourses
-    ;'''
-    #i changed this so that it asks for race name not id               
+    ;'''           
     results = db.run_query(sql, {'RaceIDOne':course_one, 'RaceIDTwo':course_two})
     
     if results.empty:
-        return "No data available for comparison."
+        return ""
     difference = results['Difference'].iloc[0]
     ratio = results['Ratio'].iloc[0]
     
@@ -267,7 +230,7 @@ def compare_course(n_clicks, course_one, course_two):
 
 def conversions_callback(n_clicks, primary_race_id, min_comparisons=15):
     if not n_clicks or primary_race_id is None:
-        return "Click compare."
+        return ""
     
     try: 
         courses_df = db.conversions(primary_race_id)
