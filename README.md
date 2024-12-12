@@ -3,13 +3,15 @@
 This repository contains files that can be used for the scraping and analyzing of results data from cross country races. Currently, the files allow for direct comparison of two races based on results from runners who competed in both. Ultimately, the files will enable a user to run virtual meets, standardize several courses of varying difficulty, and track runner improvement throughout the season.
 
 ## Quick Start Guide
-We did not include any pipenv setup files for this, so ensure that the necessary libraries (`pip install pandas`, `pip install numpy`, `pip install beautifulsoup4 as bs4`, `pip install requests`). 
+We did not include any pipenv setup files for this, so ensure that the necessary libraries (`pip install pandas`, `pip install numpy`, `pip install beautifulsoup4 as bs4`, `pip install requests`) are installed.
 
-To see an example of the database and the querying functions, download `courses.py` and `CourseFunctions.ipynb` in the same folder. Follow the instructions in the notebook to create the database, load the data, and see the querying functions in action. 
+To interact with the dashboard, download `courses.py`, `courses.db` and `dash_testing.py` to the same folder. Do not rename any files. Navigate to the directory where the files are located via the command line (example: `cd '/Users/anniewicker/Desktop/23-24/Fall_24/Automation'`). Then type `python dash_testing.py`. A link like this should appear in the output: http://127.0.0.1:8050/. Paste this into your browser to see the dashboard. 
 
-All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. To load a race or races of interest, copy the results URL from TFRRS and enter it as an argument to the `db.load_results` function. 
+To just see an example of the database and the querying functions in a python environment, download `courses.py` and `CourseFunctions.ipynb` in the same folder. Follow the instructions in the notebook to create the database, load the data, and see the querying functions in action. 
 
-To explore the dashboard, download `dash_testing.py` to the same folder as `courses.py`. Do not rename the file. Navigate to the directory where the files are located via the command line (example: `cd '/Users/anniewicker/Desktop/23-24/Fall_24/Automation'`). Then type `python dash_testing.py`. A link like this should appear in the output: http://127.0.0.1:8050/. Paste this into your browser to load and interact with the dashboard. 
+All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. To load a race or races of interest, copy the results URL from TFRRS and paste it into the "Enter Race URL" box on the dashboard. Click "Scrape and Load Results" to load the data. To compare courses or predict times, a minimum of two races must be loaded in the dashboard. For those unfamiliar with TFRRS, use these sample URLs to begin:
+https://www.tfrrs.org/results/xc/25186/Panorama_Farms_Invitational
+https://www.tfrrs.org/results/xc/23362/2024_Pirate_Cross_Country_Invitational_
 
 ## Getting Started
 `courses.py` creates and maintains a database of all user-inputted TFRRS data. It incorporates a webscraping script to load the data into the database, and contains functions for running queries on the database. The webscraping script, `tffrsdatascraping.py`, takes a URL from the Track and Field Results Reporting System (TFRRS) and scrapes the data from that race. The function defaults to scraping women's results, but the 'gender' argument can be changed to gender=men for men's results. It automatically drops racers' times who did not start (DNS) or did not finish (DNF) the race. 
