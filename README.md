@@ -9,9 +9,7 @@ To interact with the dashboard, download `courses.py`, `courses.db` and `dash_te
 
 To just see an example of the database and the querying functions in a python environment, download `courses.py` and `CourseFunctions.ipynb` in the same folder. Follow the instructions in the notebook to create the database, load the data, and see the querying functions in action. 
 
-All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. To load a race or races of interest, copy the results URL from TFRRS and paste it into the "Enter Race URL" box on the dashboard. Click "Scrape and Load Results" to load the data. To compare courses or predict times, a minimum of two races must be loaded in the dashboard. For those unfamiliar with TFRRS, use these sample URLs to begin:
-https://www.tfrrs.org/results/xc/25186/Panorama_Farms_Invitational
-https://www.tfrrs.org/results/xc/23362/2024_Pirate_Cross_Country_Invitational_
+All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. To load a race or races of interest, copy the results URL from TFRRS and paste it into the "Enter Race URL" box on the dashboard. Click "Scrape and Load Results" to load the data. To compare courses or predict times, a minimum of two races must be loaded in the dashboard. The sample database in this repository is pre-loaded with seven race results. 
 
 ## Getting Started
 `courses.py` creates and maintains a database of all user-inputted TFRRS data. It incorporates a webscraping script to load the data into the database, and contains functions for running queries on the database. The webscraping script, `tffrsdatascraping.py`, takes a URL from the Track and Field Results Reporting System (TFRRS) and scrapes the data from that race. The function defaults to scraping women's results, but the 'gender' argument can be changed to gender=men for men's results. It automatically drops racers' times who did not start (DNS) or did not finish (DNF) the race. 
