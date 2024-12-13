@@ -73,6 +73,7 @@ app.layout = html.Div(
                             style={'width':'60%'}
                         ),
                         html.Button("Scrape and Load Results", id="scrape-button"),
+                        html.Button("Clear Table", id="clear-table-button"),
                         html.Div(id="output"),
                         html.Div(
                             [
@@ -141,25 +142,40 @@ app.layout = html.Div(
 #callback for TFRRS URL
 @app.callback(
     Output("race-table", "data"),
-    [Input("scrape-button", "n_clicks")],
+    [Input("scrape-button", "n_clicks"),
+     Input("clear-table-button", "n_clicks")],
     [State("gender-dropdown", "value"),
-     State("url-input", "value")]
+     State("url-input", "value")],
+    prevent_initial_call=True
 )
-def load_or_scrape_data(n_clicks, gender, url):
-    if n_clicks is None:
-        initial_data = db.run_query(query)
-        return initial_data.to_dict("records")
-    
-    if not url:
+def load_or_scrape_data(scrape_clicks, clear_clicks, gender, url):
+    if not dash.callback_context.triggered:
         return []
     
-    try:
-        db.load_results(url, gender)
-        updated_data = db.run_query(query)
-        return updated_data.to_dict("records")
-    except Exception as e:
+    triggered_id = dash.callback_context.triggered[0]["prop_id"].split(".")[0]
+    
+    if triggered_id == "clear-table-button":
+        try:
+            db.drop_all_tables(are_you_sure=True)
+            db.build_tables()
+            return []
+        except Exception as e:
+            print(f"Error clearing table: {e}")
+            return []
+        
+    if triggered_id == "scrape-button":
+        if not url:
+            return []
+        try:
+            db.load_results(url, gender)
+            updated_data = db.run_query(query)
+            return updated_data.to_dict("records")
+        except Exception as e:
+            print(f"Error scraping data: {e}")
         return []
-
+    
+    return [] 
+    
 #callback for course comparisons
 @app.callback(
     Output('comparison-result', 'children',),
