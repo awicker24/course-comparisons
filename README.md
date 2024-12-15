@@ -1,6 +1,6 @@
 # Cross Country Course Comparisons
 ## Description
-This repository contains files that can be used for the scraping and analyzing of results data from cross country races. Currently, the files allow for direct comparison of two races based on results from runners who competed in both. Ultimately, the files will enable a user to run virtual meets, standardize several courses of varying difficulty, and track runner improvement throughout the season.
+This repository contains files that can be used for the scraping and analyzing of results data from cross country races. Currently, the files allow for direct comparison of two races based on results from runners who competed in both. Ultimately, the files will enable a user to run virtual meets, standardize several courses of varying difficulty, and track runner improvement throughout the season. To learn more about the motivation behind this project, the data of interest, and our methods, read "Course_Comparison_Project_Proposal.pdf". 
 
 ## Quick Start Guide
 We did not include any pipenv setup files for this, so ensure that the necessary libraries (`pip install pandas`, `pip install numpy`, `pip install beautifulsoup4 as bs4`, `pip install requests`) are installed.
