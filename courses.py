@@ -337,15 +337,17 @@ class CoursesDB:
         ------------------------------------------------- CONVERSIONS AND STATISTICS -------------------------------------------------
         '''
     
-    def compare_two_courses(self, RaceIDOne:int, RaceIDTwo:int):  
+    def compare_two_courses(self, 
+                            RaceIDOne:int, 
+                            RaceIDTwo:int):  
         '''
         This function compares two courses specified by their race_id's.
         It will output the difference in seconds in average race times (difference), the ratio of average race times (ratio), and
         the number of runners in common between the two courses (NumCompared).
         The first course is used as a comparison point. 'difference' is the number of seconds faster or slower that the second course
         averages compared to the first course; a negative value for 'difference' means the second course was faster.
-        'ratio' is the number that times from the second course would need to be multiplied by in order to standardize them to the first 
-        course; the average time from the second course multiplied by 'ratio' should yield the average time from the first course.
+        'ratio' is the number that race times from the first course would need to be multiplied by in order to standardize them to the second 
+        course; the average time from the first course multiplied by 'ratio' should yield the average time from the second course.
         This function only compares times in runners who competed in both meets. The number of runners in common is shown as NumCompared.
         '''
 
@@ -385,7 +387,7 @@ class CoursesDB:
         JOIN CourseTwo
         )
         
-        SELECT AvgCourseOne - AvgCourseTwo AS Difference, AvgCourseOne / AvgCourseTwo AS Ratio, NumCompared
+        SELECT AvgCourseTwo - AvgCourseOne AS Difference, AvgCourseTwo / AvgCourseOne AS Ratio, NumCompared
         FROM BothCourses
 
         ;'''
@@ -393,6 +395,7 @@ class CoursesDB:
         results = self.run_query(sql, {'RaceIDOne':RaceIDOne, 'RaceIDTwo':RaceIDTwo}) 
         
         return results
+
 
     
     def predict_times(self, target_course_id):
@@ -463,7 +466,9 @@ class CoursesDB:
         return predictions_df
 
 
-    def conversions(self, primary_race_id, min_comparisons = 15):
+    def conversions(self, 
+                    primary_race_id:int, 
+                    min_comparisons = 15):
         '''
         connects courses together to compare times
         User specifies one race they want to be the point of comparison. All other courses are given a ratio based on how much 
@@ -471,6 +476,8 @@ class CoursesDB:
         are outputed in a dataframe. Ratios will be more accurate than time differences due to varying speeds of runners
         min_comparisons can be set as the number of runners that a race must have in common in order to be compared. It will
         default to 15 if not set.
+        A positive value for time_conversion and a value of ratio_conversion greater than 1 both indicate that a course was slower
+        than the primary course
         '''
 
         coursesdf = self.see_loaded_races() # look up all the courses loaded into the database
@@ -612,7 +619,7 @@ class CoursesDB:
                 coursesdf.loc[coursesdf['race_id'] == quaternary_race_id, 'time_conversion'] = this_diff # add calculated time difference to dataframe
             else:
                 unusable_courses.append(item)
-                print('Not enough information to compare race ' + str(item) + '. Only ' + str(total_comparisons) + ' runners in common.')
+                print('Note: not enough information to compare race ' + str(item) + '. Only ' + str(total_comparisons) + ' runners in common.')
 
         return coursesdf 
     
