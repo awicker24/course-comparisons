@@ -226,7 +226,7 @@ class CoursesDB:
         runner_id = x.iloc[0,0]
         return runner_id
     
-    def get_race_id(self, race, date): #, distance):  #NOOOOTTTTT FINNNISHHHEDDDDD   -   distance ??
+    def get_race_id(self, race, date): 
         '''
         check if race_id exists for this combo
         create race_id and add race to tRace if not
@@ -278,10 +278,66 @@ class CoursesDB:
 
 
         '''
-        ------------------------------------------------- STATISTICS --------------------------------------------------------------
+        ------------------------------------------------- BASIC QUERIES --------------------------------------------------------------
+        '''
+    def see_loaded_races(self):
+        '''
+        Outputs a list of all races that have been loaded into the database
         '''
 
-    def compare_two_courses(self, RaceIDOne, RaceIDTwo):  
+        results = self.run_query('''SELECT * FROM tRace''')
+        
+        return results
+
+    
+    def course_lookup(self, partial_race_name:str):
+        '''
+        Finds courses with partial_race_name as a keyword and return all results from that race
+        '''
+        sql = '''
+        SELECT * FROM tRace
+        JOIN tRaceResult USING (race_id)
+        WHERE race LIKE '%' || :partial_name || '%' 
+        ;'''
+        results = self.run_query(sql, {'partial_name': partial_race_name})
+        return results
+
+
+    def runner_lookup(self, partial_runner_name:str):
+        '''
+        Finds runners with partial_runner_name as a keyword and return all runners with that fragment in their name
+        '''
+        sql = '''
+        SELECT * FROM tRunner
+        WHERE name LIKE '%' || :partial_name || '%' 
+        ;'''
+        results = self.run_query(sql, {'partial_name': partial_runner_name})
+        return results
+
+    
+    def find_races_in_common(self, runner_id_1:int, runner_id_2:int):
+        '''
+        Finds all races that two people have run together
+        '''
+        sql = '''
+        SELECT * FROM tRace
+        WHERE race_id IN (
+            SELECT race_id
+            FROM tRaceResult
+            WHERE runner_id = :runner_id_1
+            INTERSECT
+            SELECT race_id
+            FROM tRaceResult
+            WHERE runner_id = :runner_id_2
+            )
+            ;'''
+        results = self.run_query(sql, {'runner_id_1': runner_id_1, 'runner_id_2': runner_id_2})
+        return results
+        '''
+        ------------------------------------------------- CONVERSIONS AND STATISTICS -------------------------------------------------
+        '''
+    
+    def compare_two_courses(self, RaceIDOne:int, RaceIDTwo:int):  
         '''
         This function compares two courses specified by their race_id's.
         It will output the difference in seconds in average race times (difference), the ratio of average race times (ratio), and
@@ -338,57 +394,6 @@ class CoursesDB:
         
         return results
 
-
-
-    def see_loaded_races(self):
-
-        results = self.run_query('''SELECT * FROM tRace''')
-        
-        return results
-    
-    def course_lookup(self, partial_race_name):
-        '''
-        Find courses with partial_race_name as a keyword and return all results from that race
-        '''
-        sql = '''
-        SELECT * FROM tRace
-        JOIN tRaceResult USING (race_id)
-        WHERE race LIKE '%' || :partial_name || '%' 
-        ;'''
-        results = self.run_query(sql, {'partial_name': partial_race_name})
-        return results
-
-
-    def runner_lookup(self, partial_runner_name):
-        '''
-        Find courses with partial_race_name as a keyword and return all results from that race
-        '''
-        sql = '''
-        SELECT * FROM tRunner
-        WHERE name LIKE '%' || :partial_name || '%' 
-        ;'''
-        results = self.run_query(sql, {'partial_name': partial_runner_name})
-        return results
-
-    
-    def find_races_in_common(self, runner_id_1, runner_id_2):
-        '''
-        Find all races that two runners have in common
-        '''
-        sql = '''
-        SELECT * FROM tRace
-        WHERE race_id IN (
-            SELECT race_id
-            FROM tRaceResult
-            WHERE runner_id = :runner_id_1
-            INTERSECT
-            SELECT race_id
-            FROM tRaceResult
-            WHERE runner_id = :runner_id_2
-            )
-            ;'''
-        results = self.run_query(sql, {'runner_id_1': runner_id_1, 'runner_id_2': runner_id_2})
-        return results
     
     def predict_times(self, target_course_id):
         '''
