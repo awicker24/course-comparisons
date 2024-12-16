@@ -621,3 +621,68 @@ class CoursesDB:
         
         return team_results
         
+
+    def select_schools(self, schools:list):
+        '''
+        Inputs a list of schools, outputs the results from each race of all runners from these two schools after
+        having standardized these results with the conversions function
+        '''
+        schools_tuple = tuple(schools)
+        # grab all runners in the database from the selected schools
+        # the .join part adds the number of question marks needed to the query based on how many schools are selected
+        query = 'SELECT runner_id, school FROM tRunner WHERE school IN (' + str(', '.join(['?']*len(schools))) + ');' 
+        racers = self.run_query(query, params = schools_tuple)
+        results = self.run_query('''SELECT runner_id, race_id, time FROM tRaceResult ;''')
+
+        # get all the race results from the database for runners in the specified schools
+        runner_results = pd.merge(
+        racers,
+        results,
+        on = 'runner_id',
+        how = 'left'
+        )
+
+        #run the conversion function
+        race_conversions = self.conversions(1)
+        race_conversions.drop(['race', 'date','time_conversion'], axis=1, inplace=True) # remove extra columns
+        race_conversions = race_conversions.dropna() # remove courses that couldn't be converted
+
+        # convert all the times
+        converted_results = pd.merge(
+            runner_results,
+            race_conversions,
+            on = 'race_id',
+            how = 'inner'
+            )
+        converted_results['time_conversion'] = converted_results.time / converted_results.ratio_conversion # standardize
+        converted_results = converted_results[['runner_id','race_id','time_conversion']]
+        
+        return converted_results
+
+
+    def virtual_race(self, schools:list):
+        ''' 
+        Inputs a list of schools to run a virutal meet against, outputs the expected results
+        '''
+        #get the list of runners and their converted times at each race from the select_schools function
+        converted_results = self.select_schools(schools)
+
+        # pivot the table so all the runners (runner_id's) are the rows and each race is a column
+        results_table = converted_results.pivot(index='runner_id', columns='race_id', values='time_conversion')
+        # add a column averaging all of the converted times
+        results_table['average_time'] = results_table.sum(axis=1) / results_table.count(axis=1)
+        # only select the runner_ids and average times
+        average_times = results_table[['average_time']]
+        average_times.reset_index(inplace=True) # turn runner_id back from index to normal column
+        # now grab all the runner names and schools from tRunner
+        runners = self.run_query('''SELECT runner_id, name, school FROM tRunner;''')
+        race = pd.merge(  # create match average times to a runner's name and school
+            average_times,
+            runners,
+            on = 'runner_id',
+            how = 'left'
+            )
+        race = race.sort_values(by='average_time') # order the dataframe
+        race.reset_index(inplace=True) # reset the index in correct order
+        
+        return race
