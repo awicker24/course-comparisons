@@ -291,11 +291,10 @@ class CoursesDB:
     
     def course_lookup(self, partial_race_name:str):
         '''
-        Finds courses with partial_race_name as a keyword and return all results from that race
+        Finds courses with partial_race_name as a keyword and return all races with that fragment in their name
         '''
         sql = '''
         SELECT * FROM tRace
-        JOIN tRaceResult USING (race_id)
         WHERE race LIKE '%' || :partial_name || '%' 
         ;'''
         results = self.run_query(sql, {'partial_name': partial_race_name})
