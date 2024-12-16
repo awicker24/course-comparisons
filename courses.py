@@ -103,7 +103,6 @@ class CoursesDB:
         )
         ;"""
         self.curs.execute(sql)
-        # still need to convert time to seconds later
         
         sql = """
         CREATE TABLE tRace (
@@ -123,7 +122,7 @@ class CoursesDB:
         ------------------------------------------------- WEB SCRAPING --------------------------------------------------------------
         '''
 
-    def get_results(self, url, gender = 'women', drop_dnf=True, drop_dns=True):
+    def get_results(self, url:str, gender = 'women', drop_dnf=True, drop_dns=True):
         '''
         A function that takes a race URL from TFRRS and returns scraped results
         from that race. By default it returns women's results. Pass 'men' to 
@@ -207,7 +206,7 @@ class CoursesDB:
         ------------------------------------------------- DYNAMIC DATA --------------------------------------------------------------
         '''
 
-    def get_runner_id(self, name, eligibility, school):
+    def get_runner_id(self, name:str, eligibility:str, school:str):
         '''
         check if runner_id exists for this combo
         add runner_id if not
@@ -226,7 +225,7 @@ class CoursesDB:
         runner_id = x.iloc[0,0]
         return runner_id
     
-    def get_race_id(self, race, date): 
+    def get_race_id(self, race:str, date): 
         '''
         check if race_id exists for this combo
         create race_id and add race to tRace if not
@@ -246,7 +245,7 @@ class CoursesDB:
         return race_id
 
     
-    def load_results(self, url, gender = 'women', drop_dnf=True, drop_dns=True):
+    def load_results(self, url:str, gender = 'women', drop_dnf=True, drop_dns=True):
         frame = self.get_results(url, gender, drop_dnf, drop_dns)
         self.connect()
         # cols = [ ... ]
@@ -337,9 +336,7 @@ class CoursesDB:
         ------------------------------------------------- CONVERSIONS AND STATISTICS -------------------------------------------------
         '''
     
-    def compare_two_courses(self, 
-                            RaceIDOne:int, 
-                            RaceIDTwo:int):  
+    def compare_two_courses(self, RaceIDOne:int, RaceIDTwo:int):  
         '''
         This function compares two courses specified by their race_id's.
         It will output the difference in seconds in average race times (difference), the ratio of average race times (ratio), and
@@ -398,7 +395,7 @@ class CoursesDB:
 
 
     
-    def predict_times(self, target_course_id):
+    def predict_times(self, target_course_id:int):
         '''
         Predicts times for runners on a specific course
         '''
@@ -466,9 +463,7 @@ class CoursesDB:
         return predictions_df
 
 
-    def conversions(self, 
-                    primary_race_id:int, 
-                    min_comparisons = 15):
+    def conversions(self, primary_race_id:int, min_comparisons = 15):
         '''
         connects courses together to compare times
         User specifies one race they want to be the point of comparison. All other courses are given a ratio based on how much 
@@ -624,7 +619,7 @@ class CoursesDB:
         return coursesdf 
     
     
-    def predict_team_results(self, school, course_id):
+    def predict_team_results(self, school:str, course_id:int):
         predictions_df = self.predict_times(course_id)
         
         team_results = predictions_df[predictions_df['school'] == school]
