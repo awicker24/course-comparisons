@@ -628,10 +628,10 @@ class CoursesDB:
         return team_results
         
 
-    def select_schools(self, schools:list):
+    def select_schools(self, schools:list, primary=1):
         '''
-        Inputs a list of schools, outputs the results from each race of all runners from these two schools after
-        having standardized these results with the conversions function
+        Inputs a list of schools and a race, and a primary course ID which defaults to 1, outputs the results from each 
+        race of all runners from these two schools after having standardized these results with the conversions function
         '''
         schools_tuple = tuple(schools)
         # grab all runners in the database from the selected schools
@@ -649,7 +649,7 @@ class CoursesDB:
         )
 
         #run the conversion function
-        race_conversions = self.conversions(1)
+        race_conversions = self.conversions(primary)
         race_conversions.drop(['race', 'date','time_conversion'], axis=1, inplace=True) # remove extra columns
         race_conversions = race_conversions.dropna() # remove courses that couldn't be converted
 
@@ -666,12 +666,13 @@ class CoursesDB:
         return converted_results
 
 
-    def virtual_race(self, schools:list):
+    def virtual_race(self, schools:list, primary=1):
         ''' 
-        Inputs a list of schools to run a virutal meet against, outputs the expected results
+        Inputs a list of schools to run a virutal meet against and a course to set as primary (defaults to 1), 
+        outputs the expected results from a meet with those teams
         '''
         #get the list of runners and their converted times at each race from the select_schools function
-        converted_results = self.select_schools(schools)
+        converted_results = self.select_schools(schools, primary)
 
         # pivot the table so all the runners (runner_id's) are the rows and each race is a column
         results_table = converted_results.pivot(index='runner_id', columns='race_id', values='time_conversion')
