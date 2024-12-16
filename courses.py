@@ -696,5 +696,7 @@ class CoursesDB:
             )
         race = race.sort_values(by='average_time') # order the dataframe
         race.reset_index(inplace=True) # reset the index in correct order
+        race['estimated_time'] = race['average_time'].apply(lambda x: str(int(x // 60)) + ':' + str(float(x % 60))[0:4]) #change time to MM:SS.D
+        race.drop(['index','average_time'], axis=1, inplace=True)
         
         return race
