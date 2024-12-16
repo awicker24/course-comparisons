@@ -135,6 +135,26 @@ app.layout = html.Div(
                         html.Div(id='prediction-result', style={'marginTop':'20px'}),
                     ]
                 ),
+                dcc.Tab(
+                    label="Virtual Meets",
+                    children=[
+                        html.H2("Run a Virtual Meet"),
+                        html.P("Select teams"),
+                    dcc.Dropdown(
+                        id='teams-dropdown',
+                        options=[{'label':row['school'], 'value':row['school']} for _, row in teams_data.iterrows()],
+                        placeholder="Select teams",
+                        multi=True,
+                    ),
+                    dcc.Dropdown(
+                        id="primary-course-dropdown",
+                        options=[{'label':row['race'], 'value':row['race_id']} for _, row in race_data.iterrows()],
+                        placeholder="Select primary course",
+                    ),
+                    html.Button("Run Meet", id="meet-button", n_clicks=0),
+                    html.Div(id="meet-result", style={'marginTop':'20px'}),
+                    ]
+                ),
             ]
         )
     ]
@@ -300,6 +320,36 @@ def predict_times_callback(n_clicks, target_course_id):
     except Exception as e:
         print(f"Error: {e}")
         return f"Error: {str(e)}"
+    
+#callback for virtual meets
+@app.callback(
+    Output("meet-result", "children"),
+    Input("meet-button", "n_clicks"),
+    State("teams-dropdown", "value"),
+    State("primary-course-dropdown", "value"),
+)
+
+def virtual_meets_callback(n_clicks, schools, primary):
+    if not n_clicks or schools is None:
+        return "Click 'Run Meet' after selecting teams."
+    try: 
+        results_df = db.virtual_race(schools, primary)
+        
+        return dash_table.DataTable(
+            data=results_df.to_dict("records"),
+            columns=[
+                {"name": "Runner ID", "id":"runner_id"},
+                {"name": "Name", "id": "name"},
+                {"name": "Schools", "id": "school"},
+                {"name": "Estimated Time", "id": "estimated_time"},
+            ],
+            filter_action="native",
+            sort_action="native",
+        )         
+    except Exception as e:
+        print(f"Error: {e}")
+        return f"Error: {str(e)}"
+        
                       
 if __name__ == '__main__':
     app.run_server(debug=True)
