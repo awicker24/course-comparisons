@@ -5,9 +5,15 @@ This repository contains files that can be used for the scraping and analyzing o
 ## Quick Start Guide
 We did not include any pipenv setup files for this, so ensure that the necessary libraries (`pip install pandas numpy beautifulsoup4 as bs4 requests`) are installed.
 
-To interact with the dashboard, download `courses.py`, `courses.db` and `dash_testing.py` to the same folder. Do not rename any files. Navigate to the directory where the files are located via the command line (example: `cd '/Users/anniewicker/Desktop/23-24/Fall_24/Automation'`). Then type `python dash_testing.py`. A link like this should appear in the output: http://127.0.0.1:8050/. Paste this into your browser to see the dashboard. 
+To interact with the dashboard:
+* Download `courses.py`, `courses.db` and `dash_testing.py` to the same folder. Do not rename any files.
+* Navigate to the directory where the files are located via the command line (example: `cd '/Users/anniewicker/Desktop/23-24/Fall_24/Automation'`).
+* Type `python dash_testing.py`. A link like this should appear in the output: http://127.0.0.1:8050/.
+* Paste link into your browser to see the dashboard. 
 
-To just see an example of the database and the querying functions in a Jupyter environment, download `courses.py` and `CourseFunctions.ipynb` in the same folder. Follow the instructions in the notebook to create the database, load the data, and see the querying functions in action. 
+To just see an example of the database and the querying functions in a Jupyter environment:
+* Download `courses.py` and `CourseFunctions.ipynb` in the same folder.
+* Follow the instructions in the notebook to create the database, load the data, and see the querying functions in action. 
 
 All data loaded into this database will come from individual race pages on the TFRRS website. Links to these pages can be found at https://www.tfrrs.org/. To load a race or races of interest, copy the results URL from TFRRS and paste it into the "Enter Race URL" box on the dashboard. Click "Scrape and Load Results" to load the data. To compare courses or predict times, a minimum of two races must be loaded in the dashboard. The sample database in this repository is pre-loaded with seven race results. 
 
