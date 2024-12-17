@@ -8,7 +8,7 @@ We did not include any pipenv setup files for this, so ensure that the necessary
 To interact with the dashboard:
 * Download `courses.py`, `courses.db` and `dash_testing.py` to the same folder. Do not rename any files.
 * Navigate to the directory where the files are located via the command line (example: `cd '/Users/anniewicker/Desktop/23-24/Fall_24/Automation'`).
-* Type `python dash_testing.py`. A link like this should appear in the output: http://127.0.0.1:8050/.
+* Type `python dash.py`. A link like this should appear in the output: http://127.0.0.1:8050/.
 * Paste link into your browser to see the dashboard. 
 
 To just see an example of the database and the querying functions in a Jupyter environment:
